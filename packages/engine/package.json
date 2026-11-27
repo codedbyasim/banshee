@@ -16,7 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "satellite.js": "^5.0.0"
+    "satellite.js": "^7.2.0"
   },
   "devDependencies": {
     "fast-check": "^3.23.1",

@@ -1,6 +1,7 @@
 export * from "./types.js";
 export * from "./physics.js";
 export * from "./tec.js";
+export * from "./orbits.js";
 export * from "./geometry.js";
 export * from "./presets.js";
 export * from "./sanitize.js";

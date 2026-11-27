@@ -25,3 +25,13 @@ Track daily progress, Kiro features used, experiments, and bugs caught by PBT/ho
   - Kp and GNSS replay ages still use the supplied `feedAges`, because those inputs carry no sample timestamp.
   - Medium/low review findings are not yet addressed: lead time not reduced by sample age, Newell coupling saturation, GloTEC grid alignment, quiet-evening post-sunset false positives, and cross-preset monotonicity.
 - **Verification (task 28):** `npm run typecheck` exit 0 (engine, feeds, swpc-mcp, web). `npm test` exit 0: `@banshee/engine` 8 files / 95 tests passed; `@banshee/feeds` 1 file / 2 tests passed; `@banshee/web` 2 files / 14 tests passed. No fixes were needed.
+
+## 2026-11-27 — Live swpc-mcp capture (Multan 30.1575, 71.5249)
+- **Solar wind** (NOAA SWPC RTSW, live): sample 2026-11-27T12:16:00Z, speed 300.4 km/s, density 2.27 cm^-3, Bt 12.03 nT, By -4.35 nT, Bz 8.65 nT (GSM), source SOLAR-1, L1 lead time 83.2 min.
+- **Kp** (NOAA SWPC planetary K-index, live): Kp 0.33, interval end 2026-11-27T12:00:00Z.
+- **GloTEC** (NOAA SWPC GloTEC 2-D, live): grid 2026-11-27T11:55:00Z, vTEC 17.16 TECU, anomaly -10.59 TECU, neighbour min/max 15.14 / 20.47 TECU. Regional ionosphere estimate (~5 x 2.5 degree grid), not an exact point.
+
+## 2026-11-27 — Playwright UI evidence (Gannon replay)
+- Opened `http://localhost:3000`, clicked the **Gannon Storm (May 2024)** tombstone. Verified a `REPLAY` badge with archive timestamp 2024-05-10T18:00:00Z and a Haunted dial (100/100, "HAUNTED — HIGH RISK").
+- Screenshots: `docs/evidence/gannon-haunted-mode.png` (Haunted Mode) and `docs/evidence/gannon-field-mode.png` (Field Mode, sunlight).
+- Console: one 404 for `/favicon.ico` only.

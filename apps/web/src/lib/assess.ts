@@ -1,17 +1,37 @@
-import { assessFieldRisk, explainAssessment, type RiskAssessment, type SolarWindSample } from "@banshee/engine";
-import { STORM_REPLAYS, type StormReplayScenario } from "@banshee/feeds";
+import {
+  assessFieldRisk,
+  explainAssessment,
+  propagateGnssElements,
+  type GloTecGrid,
+  type RiskAssessment,
+  type SolarWindSample,
+} from "@banshee/engine";
+import { STORM_REPLAYS, type GnssElementSet, type KpSample, type StormReplayScenario } from "@banshee/feeds";
+
+/** Which live fetches succeeded on this request (live path only). */
+export interface LiveFeedFlags {
+  solarWind: boolean;
+  glotec: boolean;
+  kp: boolean;
+  gnss: boolean;
+}
 
 export interface AssessResponse {
   assessment: RiskAssessment;
   /** Deterministic English explanation (FR-RE-33). */
   explanation: string;
   summary?: string;
+  /** Per-feed live status (live path only). */
+  liveFeeds?: LiveFeedFlags;
+  /** True only when all four live feeds succeeded (live path only). */
   liveFeedsConnected?: boolean;
 }
 
 export interface LiveFeedDeps {
   fetchLiveSolarWind: () => Promise<SolarWindSample | null>;
-  fetchLiveKpIndex: () => Promise<number | null>;
+  fetchLiveGloTec: () => Promise<GloTecGrid | null>;
+  fetchLiveKp: () => Promise<KpSample | null>;
+  fetchLiveGnssElements: () => Promise<GnssElementSet | null>;
   nowIso: () => string;
 }
 
@@ -74,28 +94,65 @@ export async function buildAssessResponse(
     return { assessment, explanation: explainAssessment(assessment), summary: scenario.summary };
   }
 
-  const [liveWind, liveKp] = await Promise.all([deps.fetchLiveSolarWind(), deps.fetchLiveKpIndex()]);
-  const fallback = STORM_REPLAYS["multan-sunset"];
+  // Live path: only real fetched data. A failed feed is null and the engine marks it stale.
+  const nowIso = deps.nowIso();
+  const [liveWind, liveGlotec, liveKp, liveGnss] = await Promise.all([
+    settle(deps.fetchLiveSolarWind),
+    settle(deps.fetchLiveGloTec),
+    settle(deps.fetchLiveKp),
+    settle(deps.fetchLiveGnssElements),
+  ]);
+  const latDeg = parseCoord(params.get("lat"), DEFAULT_LAT);
+  const lonDeg = parseCoord(params.get("lon"), DEFAULT_LON);
+  const satellites = liveGnss
+    ? propagateGnssElements(liveGnss.elements, latDeg, lonDeg, nowIso).satellites
+    : [];
+
   const assessment = assessFieldRisk({
-    latDeg: parseCoord(params.get("lat"), DEFAULT_LAT),
-    lonDeg: parseCoord(params.get("lon"), DEFAULT_LON),
-    timestampIso: deps.nowIso(),
+    latDeg,
+    lonDeg,
+    timestampIso: nowIso,
     ...presetOpts,
-    solarWind: liveWind ?? fallback.solarWind,
-    glotec: fallback.glotec,
-    kpIndex: liveKp ?? fallback.kpIndex,
-    satellites: fallback.satellites,
+    solarWind: liveWind,
+    glotec: liveGlotec,
+    kpIndex: liveKp ? liveKp.kpIndex : null,
+    satellites,
     feedAges: {
-      solarWindAgeMin: liveWind ? 2 : 45,
-      glotecAgeMin: 8,
-      kpAgeMin: liveKp !== null ? 15 : 210,
-      gnssAgeMin: 60,
+      solarWindAgeMin: ageMinutes(nowIso, liveWind?.timestampIso),
+      glotecAgeMin: ageMinutes(nowIso, liveGlotec?.timestampIso),
+      kpAgeMin: ageMinutes(nowIso, liveKp?.timestampIso),
+      gnssAgeMin: ageMinutes(nowIso, liveGnss?.fetchedAtIso),
     },
     isReplay: false,
   });
+  const liveFeeds = {
+    solarWind: liveWind !== null,
+    glotec: liveGlotec !== null,
+    kp: liveKp !== null,
+    gnss: liveGnss !== null,
+  };
   return {
     assessment,
     explanation: explainAssessment(assessment),
-    liveFeedsConnected: Boolean(liveWind),
+    liveFeeds,
+    liveFeedsConnected: liveFeeds.solarWind && liveFeeds.glotec && liveFeeds.kp && liveFeeds.gnss,
   };
+}
+
+/** Run a fetcher; a rejection or throw becomes null so one feed cannot break the others. */
+async function settle<T>(fn: () => Promise<T | null>): Promise<T | null> {
+  try {
+    return await fn();
+  } catch {
+    return null;
+  }
+}
+
+/** Minutes from `sampleIso` to `nowIso`; null when either is missing or unparseable. */
+function ageMinutes(nowIso: string, sampleIso: string | undefined): number | null {
+  if (sampleIso === undefined) return null;
+  const now = Date.parse(nowIso);
+  const t = Date.parse(sampleIso);
+  if (!Number.isFinite(now) || !Number.isFinite(t)) return null;
+  return (now - t) / 60_000;
 }
