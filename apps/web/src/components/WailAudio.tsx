@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   labelPlay: string;
@@ -7,8 +7,34 @@ interface Props {
   fieldMode: boolean;
 }
 
+const MUTE_KEY = "banshee.wailMuted";
+
+/**
+ * Synthesized wail (Web Audio only, no audio files). It plays only from an explicit click on
+ * the play button and never automatically. The mute choice is persisted in localStorage.
+ */
 export function WailAudio({ labelPlay, labelMute, fieldMode }: Props) {
   const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(MUTE_KEY) === "1") setMuted(true);
+    } catch {
+      // Storage can be blocked; the toggle still works for this session.
+    }
+  }, []);
+
+  const toggleMute = () => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        window.localStorage.setItem(MUTE_KEY, next ? "1" : "0");
+      } catch {
+        // Ignore storage failures.
+      }
+      return next;
+    });
+  };
 
   const playWail = () => {
     if (muted || typeof window === "undefined") return;
@@ -27,6 +53,9 @@ export function WailAudio({ labelPlay, labelMute, fieldMode }: Props) {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 1.25);
+    osc.onended = () => {
+      void ctx.close();
+    };
   };
 
   return (
@@ -35,6 +64,7 @@ export function WailAudio({ labelPlay, labelMute, fieldMode }: Props) {
         type="button"
         onClick={playWail}
         disabled={muted}
+        data-testid="wail-play"
         className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
           fieldMode
             ? "border-slate-900 bg-slate-900 text-white disabled:opacity-40"
@@ -45,12 +75,14 @@ export function WailAudio({ labelPlay, labelMute, fieldMode }: Props) {
       </button>
       <button
         type="button"
-        onClick={() => setMuted((m) => !m)}
+        onClick={toggleMute}
+        aria-pressed={muted}
+        data-testid="wail-mute"
         className={`rounded-lg border px-2.5 py-1.5 text-xs ${
-          fieldMode ? "border-slate-400 text-slate-800" : "border-slate-700 text-slate-300"
+          fieldMode ? "border-slate-500 text-slate-800" : "border-slate-600 text-slate-300"
         }`}
       >
-        {muted ? "Unmute" : labelMute}
+        {muted ? "Unmute Wail" : labelMute}
       </button>
     </div>
   );

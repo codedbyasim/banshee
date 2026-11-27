@@ -13,11 +13,25 @@ export default function nextConfig(phase) {
     // Monorepo root; stops Next picking a stray lockfile outside the repo.
     outputFileTracingRoot: repoRoot,
     transpilePackages: ["@banshee/engine", "@banshee/feeds"],
-    webpack: (config) => {
+    webpack: (config, { isServer, webpack }) => {
       config.resolve.extensionAlias = {
         ...(config.resolve.extensionAlias ?? {}),
         ".js": [".ts", ".tsx", ".js", ".jsx"],
       };
+      if (!isServer) {
+        // satellite.js ships an optional pthreads WASM runtime that imports Node built-ins.
+        // The engine only uses the pure-JS SGP4 path, so stub them in the browser bundle.
+        config.plugins.push(
+          new webpack.NormalModuleReplacementPlugin(/^node:(module|worker_threads)$/, (resource) => {
+            resource.request = resource.request.replace(/^node:/, "");
+          }),
+        );
+        config.resolve.fallback = {
+          ...(config.resolve.fallback ?? {}),
+          module: false,
+          worker_threads: false,
+        };
+      }
       return config;
     },
   };

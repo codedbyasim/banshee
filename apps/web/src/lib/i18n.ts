@@ -27,6 +27,7 @@ export const COPY = {
   unverifiedArchive: "UNVERIFIED ARCHIVE",
   unverifiedBanner: "This replay could not be verified, so it is treated as stale and Safe is locked out.",
   staleBanner: "STALE FEED GUARD — Live data is old or unavailable; Safe level is locked out.",
+  staleReplayBanner: "STALE FEED GUARD — Archived replay data is incomplete or unverified; Safe level is locked out.",
   invalidInputBanner: "INVALID INPUT — These fields could not be read, so Safe is locked out:",
   unavailable: "unavailable",
   wailBtn: "Test Banshee Wail",

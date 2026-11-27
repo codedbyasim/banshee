@@ -43,13 +43,13 @@ const DEFAULT_LON = 71.5249;
  * non-numeric value becomes NaN so the engine reports INVALID_INPUT (FR-RE-14) instead of
  * the route silently substituting 0 or the default.
  */
-function parseCoord(raw: string | null, fallback: number): number {
+export function parseCoord(raw: string | null, fallback: number): number {
   if (raw === null) return fallback;
   if (raw.trim() === "") return Number.NaN;
   return Number(raw);
 }
 
-function presetOptions(params: URLSearchParams): { presetId?: string; elevationMaskDeg?: number } {
+export function presetOptions(params: URLSearchParams): { presetId?: string; elevationMaskDeg?: number } {
   const presetParam = params.get("presetId");
   const maskParam = params.get("elevationMaskDeg");
   const maskNum = maskParam !== null && maskParam.trim() !== "" ? Number(maskParam) : Number.NaN;
@@ -60,7 +60,7 @@ function presetOptions(params: URLSearchParams): { presetId?: string; elevationM
   return out;
 }
 
-function findReplay(id: string | null): StormReplayScenario | null {
+export function findReplay(id: string | null): StormReplayScenario | null {
   if (id === null || !Object.prototype.hasOwnProperty.call(STORM_REPLAYS, id)) return null;
   return STORM_REPLAYS[id as StormReplayScenario["id"]];
 }
@@ -140,7 +140,7 @@ export async function buildAssessResponse(
 }
 
 /** Run a fetcher; a rejection or throw becomes null so one feed cannot break the others. */
-async function settle<T>(fn: () => Promise<T | null>): Promise<T | null> {
+export async function settle<T>(fn: () => Promise<T | null>): Promise<T | null> {
   try {
     return await fn();
   } catch {
@@ -149,7 +149,7 @@ async function settle<T>(fn: () => Promise<T | null>): Promise<T | null> {
 }
 
 /** Minutes from `sampleIso` to `nowIso`; null when either is missing or unparseable. */
-function ageMinutes(nowIso: string, sampleIso: string | undefined): number | null {
+export function ageMinutes(nowIso: string, sampleIso: string | undefined): number | null {
   if (sampleIso === undefined) return null;
   const now = Date.parse(nowIso);
   const t = Date.parse(sampleIso);

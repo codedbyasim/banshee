@@ -7,5 +7,7 @@ export * from "./presets.js";
 export * from "./sanitize.js";
 export * from "./replay.js";
 export * from "./risk.js";
+export * from "./decision.js";
+export * from "./forecast.js";
 export * from "./grounding.js";
 export * from "./explainer.js";

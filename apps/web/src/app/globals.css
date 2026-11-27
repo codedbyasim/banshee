@@ -6,3 +6,22 @@ body {
   background-color: #07090f;
   color: #f8fafc;
 }
+
+/* Reduced Motion: set from prefers-reduced-motion or the manual toggle in page.tsx. */
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
