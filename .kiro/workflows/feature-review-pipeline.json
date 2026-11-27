@@ -1,0 +1,55 @@
+{
+  "name": "banshee-feature-review-pipeline",
+  "version": "1.0.0",
+  "description": "End-to-end Banshee feature workflow: EARS spec ambiguity check -> parallel implementation -> clean-context multi-model code & physics review -> PBT validation.",
+  "steps": [
+    {
+      "id": "analyze-requirements",
+      "name": "Analyze Spec Requirements for Ambiguity & Conflicts",
+      "agent": "default",
+      "model": "claude-sonnet",
+      "prompt": "Run spec correctness check across .kiro/specs/ to verify there are no ambiguous or conflicting EARS requirements before implementation."
+    },
+    {
+      "id": "parallel-build",
+      "name": "Parallel Implementation Workers",
+      "parallel": true,
+      "workers": [
+        {
+          "id": "feeds-worker",
+          "agent": "data-wrangler",
+          "model": "claude-sonnet",
+          "prompt": "Implement or update defensive parsers and fixtures in packages/feeds/ and run parser PBTs."
+        },
+        {
+          "id": "ui-worker",
+          "agent": "haunt-designer",
+          "model": "claude-sonnet",
+          "prompt": "Implement UI updates in apps/web/ following .kiro/steering/haunt-design.md (AA contrast, Field Mode, English-only copy)."
+        }
+      ]
+    },
+    {
+      "id": "clean-context-physics-review",
+      "name": "Clean-Context Multi-Model Physics & Code Review",
+      "freshContext": true,
+      "agent": "physicist",
+      "model": "gpt-5",
+      "prompt": "Review packages/engine/ in a clean context window against .kiro/steering/space-physics.md and .kiro/steering/honesty.md. Flag any unit, frame (GSM vs GSE), or staleness violations."
+    },
+    {
+      "id": "red-team-grounding",
+      "name": "Skeptic Red-Team Grounding Check",
+      "freshContext": true,
+      "agent": "skeptic",
+      "model": "gpt-5",
+      "prompt": "Red-team packages/engine/src/explainer.ts and verify no ungrounded numbers can bypass verifyGroundedNumbers()."
+    },
+    {
+      "id": "verify-gate",
+      "name": "Final PBT & Typecheck Gate",
+      "type": "shell",
+      "command": "npm run typecheck && npm test"
+    }
+  ]
+}

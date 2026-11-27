@@ -1,0 +1,14 @@
+{
+  "name": "Guard CDK Deploy Until Tests & Typecheck Pass",
+  "version": "1.0.0",
+  "description": "Blocks cdk deploy shell commands unless npm run typecheck and npm test succeed.",
+  "when": {
+    "type": "preToolUse",
+    "tool": "shell",
+    "pattern": "*cdk deploy*"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run typecheck && npm test"
+  }
+}

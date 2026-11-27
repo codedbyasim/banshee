@@ -1,0 +1,12 @@
+{
+  "name": "Snapshot Spec Progress Before Compaction",
+  "version": "1.0.0",
+  "description": "Saves current spec progress summary to docs/sessions/ before context compaction.",
+  "when": {
+    "type": "preCompaction"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Write a brief markdown progress snapshot of active specs and open tasks to docs/sessions/latest-snapshot.md."
+  }
+}

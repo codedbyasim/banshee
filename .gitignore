@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Builds
+.next/
+.next-dev/
+out/
+dist/
+build/
+cdk.out/
+
+# Environment & local secrets (NEVER ignore .kiro/)
+.env
+.env.local
+.env.*.local
+
+# OS & logs
+.DS_Store
+*.log
+npm-debug.log*
+coverage/

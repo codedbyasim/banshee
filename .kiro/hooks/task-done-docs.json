@@ -1,0 +1,12 @@
+{
+  "name": "Update CHANGELOG & Kiro Journal After Spec Task",
+  "version": "1.0.0",
+  "description": "Appends completed spec task evidence to CHANGELOG.md and docs/kiro-log.md for the Kiroween write-up.",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Append a concise 2-line entry to docs/kiro-log.md and CHANGELOG.md describing the task just completed, which Kiro feature helped, and any bugs caught."
+  }
+}

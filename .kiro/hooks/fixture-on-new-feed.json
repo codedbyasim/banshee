@@ -1,0 +1,15 @@
+{
+  "name": "Generate Fixture & Schema Test on New Feed",
+  "version": "1.0.0",
+  "description": "When a new feed parser is created in packages/feeds/src/, ask the agent to add a fixture and fast-check parser test.",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "packages/feeds/src/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new feed module was created in packages/feeds/src/. Add a realistic JSON fixture and a fast-check robustness property test ensuring null, NaN, and 99999.9 fill values never crash ingestion."
+  }
+}

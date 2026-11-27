@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "sandbox": {
+    "enabled": true,
+    "enforcePolicy": true
+  },
+  "shell": {
+    "allow": [
+      "npm test*",
+      "npm run typecheck*",
+      "npm run build*",
+      "npm run dev*",
+      "npx vitest*",
+      "npx tsc*",
+      "git status*",
+      "git diff*",
+      "git log*"
+    ],
+    "deny": [
+      "rm -rf /*",
+      "rm -rf .kiro*",
+      "git push --force*",
+      "cdk deploy* --force*"
+    ],
+    "ask": [
+      "cdk deploy*",
+      "git push*"
+    ]
+  },
+  "filesystem": {
+    "denyWrite": [
+      ".env",
+      ".env.local"
+    ],
+    "protectFromIgnore": [
+      ".kiro/**"
+    ]
+  },
+  "mcp": {
+    "allow": [
+      "swpc-mcp:*",
+      "playwright:browser_navigate",
+      "playwright:browser_snapshot",
+      "playwright:browser_screenshot"
+    ]
+  }
+}

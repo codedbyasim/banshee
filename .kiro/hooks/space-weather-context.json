@@ -1,0 +1,12 @@
+{
+  "name": "Inject Today's Space Weather on Session Start",
+  "version": "1.0.0",
+  "description": "Fetches current NOAA SWPC scales at session start and injects a brief summary into agent context.",
+  "when": {
+    "type": "sessionStart"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "If swpc-mcp is available, call get_solar_wind and get_kp_forecast to note today's live space-weather conditions in one sentence before starting work."
+  }
+}

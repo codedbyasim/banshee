@@ -1,0 +1,26 @@
+name: Kiro CLI Automated PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  kiro-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify .kiro integrity & run local checks
+        run: |
+          test -d .kiro
+          ! git check-ignore -q .kiro
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm test
+      # When Kiro CLI credentials are configured in GitHub Secrets, uncomment:
+      # - name: Run Kiro CLI headless review (LLM-as-judge)
+      #   run: kiro-cli chat --non-interactive "Review git diff origin/main against .kiro/steering/space-physics.md and .kiro/steering/honesty.md"

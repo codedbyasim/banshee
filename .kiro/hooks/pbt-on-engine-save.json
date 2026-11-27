@@ -1,0 +1,16 @@
+{
+  "name": "Run PBT Suite on Engine Save",
+  "version": "1.0.0",
+  "description": "Runs fast-check property-based tests immediately whenever any file in packages/engine/ is saved.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "packages/engine/src/**/*.ts",
+      "packages/engine/tests/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm --workspace=@banshee/engine test"
+  }
+}

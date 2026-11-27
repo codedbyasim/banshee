@@ -1,0 +1,158 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "7. Add `src/presets.ts` with the frozen `SENSITIVITY_PRESETS` table (`TRACTOR_RTK` 15° / gain 1.00, `SURVEY_DRONE` 10° / gain 1.15, both marked tunable defaults, plus `CUSTOM` gain 1.00), `DEFAULT_PRESET_ID` (`TRACTOR_RTK`), `DEFAULT_CUSTOM_MASK_DEG` (15), and pure `resolvePreset(id, callerMaskDeg)` that clamps the `CUSTOM` mask to `[0, 90]`, falls back to 15° for missing or non-finite masks, and ignores the caller mask for other presets (FR-RE-8)": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958044
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717974638
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718199994
+      }
+    ],
+    "8. Update `src/types.ts`: add `presetId` (`PresetId` includes `CUSTOM`) input, keep `elevationMaskDeg` input (used only by `CUSTOM`), and add `preset` output (`id`, `label`, effective `elevationMaskDeg`, `gain`), per-feed age and source, unknown-preset reason, and custom-mask-defaulted reason; export from `src/index.ts`": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958128
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718205060
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718454086
+      }
+    ],
+    "9. Update `src/risk.ts`: resolve preset and effective mask via `resolvePreset(presetId, elevationMaskDeg)`, add reasons for unknown preset and for defaulted `CUSTOM` mask, apply `clamp(round(raw * gain))`, apply the stale floor after the gain, keep level bands fixed, collect named stale feeds in `STALE_DATA` (FR-RE-3, FR-RE-8)": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958180
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718463730
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718862670
+      }
+    ],
+    "10. Update replay handling in `src/risk.ts` per FR-RE-10: exempt from wall-clock staleness only when replay label and archive timestamp are present; otherwise treat as live": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958239
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718863106
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795719393815
+      }
+    ],
+    "11. Make `computeL1LeadTimeMinutes` outcome null outside `[250, 3000]` km/s and treat non-finite inputs as missing feeds (FR-RE-4, FR-RE-13)": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958308
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795718863697
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795719394065
+      }
+    ],
+    "12. Add output labelling fields (heuristic disclaimer, regional-estimate wording, `isReplay`, replay label and archive timestamp) and update `src/explainer.ts` to cite preset values only from output JSON (FR-RE-7, FR-RE-9)": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958380
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795719395271
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795719986874
+      }
+    ],
+    "13. Add PBT properties P10-P20 to `tests/engine.pbt.test.ts` (bounds, fixed bands, stale never Safe, gain monotonicity, driver monotonicity per preset, determinism, unknown preset fallback, mask effect, all run over `TRACTOR_RTK`, `SURVEY_DRONE` and `CUSTOM`; plus `CUSTOM` mask clamp to `[0, 90]`, caller mask ignored by non-CUSTOM presets, and `CUSTOM` invalid mask falling back to 15° with a reason)": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958439
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795719988385
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795720317653
+      }
+    ],
+    "14. Add example tests: preset table validity (including `CUSTOM` gain 1.00 and default mask 15°), `CUSTOM` examples (mask 5 → 5, 120 → 90, -10 → 0, `NaN` → 15 with reason), staleness boundary at exactly max age, lead time null outside range, replay without label treated as live, slant mapping `M(el) >= 1`, post-sunset factor window": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958491
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795719989680
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795720318542
+      }
+    ],
+    "15. Verify `packages/engine` has no DOM, `Date.now()`, `Math.random()`, or mutable module state (grep check in CI) and update `apps/web` and `/api/assess` callers to pass `presetId` and `elevationMaskDeg`, with a web preset selector (Tractor RTK, Survey Drone, Custom) and an elevation mask input (degrees, 0–90) shown only when Custom is selected (separate UI task, out of engine scope)": [
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795717958545
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795720319830
+      },
+      {
+        "executionId": "a66191e2-c0c6-4b96-9541-5023245ee21d",
+        "chatSessionId": "sess_7b24bb53-5a7b-4adb-af04-6cca7431342b",
+        "timestamp": 1795722141821
+      }
+    ]
+  }
+}

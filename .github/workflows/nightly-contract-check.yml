@@ -1,0 +1,27 @@
+name: Nightly Space-Weather Contract Check (Kiro CLI V3)
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  contract-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Probe live NOAA SWPC & CelesTrak data contracts
+        run: |
+          node -e "
+          Promise.all([
+            fetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json').then(r => r.ok),
+            fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP=gnss&FORMAT=json').then(r => r.ok)
+          ]).then(ok => {
+            if (!ok.every(Boolean)) process.exit(1);
+            console.log('All live feeds reachable.');
+          });
+          "

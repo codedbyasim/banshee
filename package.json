@@ -1,0 +1,27 @@
+{
+  "name": "banshee-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Banshee \u2014 Space-weather early warning that wails before solar storms break your GPS (Kiroween 2026).",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "infra"
+  ],
+  "scripts": {
+    "dev": "npm --workspace=@banshee/web run dev",
+    "build": "npm run build:packages && npm --workspace=@banshee/web run build",
+    "build:packages": "npm --workspace=@banshee/engine run build && npm --workspace=@banshee/feeds run build && npm --workspace=@banshee/swpc-mcp run build",
+    "test": "npm --workspace=@banshee/engine test && npm --workspace=@banshee/feeds test && npm --workspace=@banshee/web test",
+    "typecheck": "npm --workspace=@banshee/engine run typecheck && npm --workspace=@banshee/feeds run typecheck && npm --workspace=@banshee/swpc-mcp run typecheck && npm --workspace=@banshee/web run typecheck",
+    "mcp:swpc": "npx tsx packages/swpc-mcp/src/server.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}

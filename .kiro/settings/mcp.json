@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "swpc-mcp": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "packages/swpc-mcp/src/server.ts"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "get_solar_wind",
+        "get_glotec_at",
+        "get_kp_forecast",
+        "get_gnss_elements"
+      ]
+    },
+    "aws-docs": {
+      "command": "uvx",
+      "args": [
+        "awslabs.aws-documentation-mcp-server@latest"
+      ],
+      "disabled": true
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "disabled": true
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "browser_navigate",
+        "browser_snapshot",
+        "browser_screenshot"
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "space-weather",
+  "version": "1.0.0",
+  "description": "Real-time space-weather & GNSS ionosphere risk analysis Power for Kiro. Bundles NOAA SWPC RTSW solar wind, GloTEC ionosphere maps, Kp forecast, and CelesTrak GNSS tools with space-physics guardrails.",
+  "author": "Zoon Software (Kiroween 2026 \u2014 Banshee)",
+  "license": "MIT",
+  "keywords": [
+    "solar wind",
+    "Kp",
+    "TEC",
+    "GNSS",
+    "GPS",
+    "ionosphere",
+    "space weather",
+    "NOAA SWPC"
+  ],
+  "mcp": "./mcp.json",
+  "skills": [
+    "./skills/space-weather-analysis.md"
+  ]
+}

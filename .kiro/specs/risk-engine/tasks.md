@@ -1,0 +1,87 @@
+# Tasks: Risk Engine
+- [x] 1. Implement `src/physics.ts` (Newell coupling, L1 lead time, IPP 350 km, slant TEC, post-sunset rule)
+- [x] 2. Implement `src/tec.ts` bilinear GloTEC sampler
+- [x] 3. Implement `src/geometry.ts` visibility, ghost classification, and clean PDOP
+- [x] 4. Implement `src/risk.ts` monotonic 0–100 scorer, staleness fail-safe, and alert idempotency
+- [x] 5. Implement `src/explainer.ts` grounded English/Urdu explainer + `verifyGroundedNumbers()`
+- [x] 6. Implement all 9 `fast-check` PBT properties in `tests/engine.pbt.test.ts`
+- [x] 7. Add `src/presets.ts` with the frozen `SENSITIVITY_PRESETS` table (`TRACTOR_RTK` 15° / gain 1.00, `SURVEY_DRONE` 10° / gain 1.15, both marked tunable defaults, plus `CUSTOM` gain 1.00), `DEFAULT_PRESET_ID` (`TRACTOR_RTK`), `DEFAULT_CUSTOM_MASK_DEG` (15), and pure `resolvePreset(id, callerMaskDeg)` that clamps the `CUSTOM` mask to `[0, 90]`, falls back to 15° for missing or non-finite masks, and ignores the caller mask for other presets (FR-RE-8)
+- [x] 8. Update `src/types.ts`: add `presetId` (`PresetId` includes `CUSTOM`) input, keep `elevationMaskDeg` input (used only by `CUSTOM`), and add `preset` output (`id`, `label`, effective `elevationMaskDeg`, `gain`), per-feed age and source, unknown-preset reason, and custom-mask-defaulted reason; export from `src/index.ts`
+- [x] 9. Update `src/risk.ts`: resolve preset and effective mask via `resolvePreset(presetId, elevationMaskDeg)`, add reasons for unknown preset and for defaulted `CUSTOM` mask, apply `clamp(round(raw * gain))`, apply the stale floor after the gain, keep level bands fixed, collect named stale feeds in `STALE_DATA` (FR-RE-3, FR-RE-8)
+- [x] 10. Update replay handling in `src/risk.ts` per FR-RE-10: exempt from wall-clock staleness only when replay label and archive timestamp are present; otherwise treat as live
+- [x] 11. Make `computeL1LeadTimeMinutes` outcome null outside `[250, 3000]` km/s and treat non-finite inputs as missing feeds (FR-RE-4, FR-RE-13)
+- [x] 12. Add output labelling fields (heuristic disclaimer, regional-estimate wording, `isReplay`, replay label and archive timestamp) and update `src/explainer.ts` to cite preset values only from output JSON (FR-RE-7, FR-RE-9)
+- [x] 13. Add PBT properties P10-P20 to `tests/engine.pbt.test.ts` (bounds, fixed bands, stale never Safe, gain monotonicity, driver monotonicity per preset, determinism, unknown preset fallback, mask effect, all run over `TRACTOR_RTK`, `SURVEY_DRONE` and `CUSTOM`; plus `CUSTOM` mask clamp to `[0, 90]`, caller mask ignored by non-CUSTOM presets, and `CUSTOM` invalid mask falling back to 15° with a reason)
+- [x] 14. Add example tests: preset table validity (including `CUSTOM` gain 1.00 and default mask 15°), `CUSTOM` examples (mask 5 → 5, 120 → 90, -10 → 0, `NaN` → 15 with reason), staleness boundary at exactly max age, lead time null outside range, replay without label treated as live, slant mapping `M(el) >= 1`, post-sunset factor window
+- [x] 15. Verify `packages/engine` has no DOM, `Date.now()`, `Math.random()`, or mutable module state (grep check in CI) and update `apps/web` and `/api/assess` callers to pass `presetId` and `elevationMaskDeg`, with a web preset selector (Tractor RTK, Survey Drone, Custom) and an elevation mask input (degrees, 0–90) shown only when Custom is selected (separate UI task, out of engine scope)
+
+## Review-fix tasks (physicist + skeptic review; English-only scope)
+- [x] 16. Input sanitization (`src/sanitize.ts`, wired first in `src/risk.ts`)
+  - Drop satellites with non-finite elevation or azimuth; report non-finite lat, lon or unparseable `timestampIso`; add `INVALID_INPUT` reason and stale floor
+  - [x] 16.1 Property test P21 (NaN/Infinity satellites dropped, score in `[0, 100]`) and P22 (invalid lat/lon/timestamp never `Safe`, all presets)
+  - [x] 16.2 Edge tests: `NaN` lat, `Infinity` lon, `"not-a-date"` timestamp, `NaN` elevation, `NaN` azimuth
+  - _Requirements: FR-RE-14_
+- [x] 17. Non-finite score guard in `combineRiskDrivers` and `scoreToLevel`
+  - Non-finite contribution becomes 0 and flags stale; `scoreToLevel(NaN)` returns `Uneasy`; final score is an integer in `[0, 100]`
+  - [x] 17.1 Property test P23 (non-finite score never `Safe`; combiner returns finite score)
+  - [x] 17.2 Edge tests: `NaN`, `Infinity`, `-Infinity` scores and contributions
+  - _Requirements: FR-RE-15_
+- [x] 18. Feed age validity and single staleness implementation
+  - Add `isFreshAge` (finite, `>= 0`, `<= max`); make `isAnyFeedStale` delegate to `listStaleFeeds`; treat empty `satellites` as stale `gnss` and empty `glotec.cells` as stale `glotec`
+  - [x] 18.1 Property test P27 (negative, `NaN`, `Infinity`, `null` ages stale; `[0, max]` fresh; delegation equivalence)
+  - [x] 18.2 Property test P26 (empty `satellites` / empty `glotec.cells` never `Safe`, named in `STALE_DATA`)
+  - [x] 18.3 Edge tests: age `-1`, `NaN`, `null`, exactly max, `0`; empty arrays
+  - _Requirements: FR-RE-20, FR-RE-21_
+- [x] 19. Zero visible satellites reason
+  - When no satellite remains above the effective mask, add `NO_VISIBLE_SATELLITES` reason and the stale floor
+  - [x] 19.1 Property test (part of P26): mask 90° or all-below-horizon sky yields level at least `Uneasy` with the reason, all presets
+  - [x] 19.2 Edge test: single satellite exactly at mask elevation
+  - _Requirements: FR-RE-20_
+- [x] 20. Unavailable data instead of invented numbers
+  - `sampleGloTEC` returns `{ status: "unavailable" }` for null or empty grids (remove 15 TECU); Kp driver "unavailable" with `metricValue: null`; `RiskDriver.metricValue: number | null` in `src/types.ts` and `src/index.ts`; `STALE_DATA.metricValue` is max age of present stale feeds, `null` otherwise (remove 999)
+  - [x] 20.1 Property test P24 (null/empty GloTEC and null Kp give `null` metric and no number)
+  - [x] 20.2 Property test P25 (`STALE_DATA.metricValue` equals max stale age, null when all absent, never 999)
+  - [x] 20.3 Update existing tests that assumed 15 TECU, `Kp 0.0` or 999; add examples for each
+  - _Requirements: FR-RE-16, FR-RE-17, FR-RE-18, FR-RE-19_
+- [x] 21. Replay validation and archive-relative ages (`src/replay.ts`)
+  - `validateReplay` with strict ISO-8601 and round-trip date check; invalid replay is stale with `replayInvalidReason` and `replayState: "unverified"`; valid replay computes ages from `sampleIso` against the archive time and uses the archive time for the post-sunset window
+  - [x] 21.1 Property test P28 (empty label, non-ISO archive, archive later than `timestampIso`: never `Safe`, reason set, unverified)
+  - [x] 21.2 Property test P29 (age equals archive minus sample; post-sunset factor uses archive time)
+  - [x] 21.3 Edge tests: `2024-02-31T00:00:00Z`, `2024-05-10`, offset `+05:00`, archive equal to `timestampIso`; update the old "replay without label treated as live" test to expect stale
+  - _Requirements: FR-RE-22, FR-RE-23 (supersedes FR-RE-10 fallback)_
+- [x] 22. `verifyGroundedNumbers` normalization and identifier handling
+  - Map Arabic-Indic, Persian and fullwidth digits to ASCII and U+2212/2013/2012/FE63 to `-`; reject remaining `\p{Nd}`; ignore identifier digits (`PRN 12`, `G05`, `SGP4`), allow literal `L1`; hyphen in ranges and compounds is not a sign
+  - [x] 22.1 Property test P30 (digit and sign variants give the same verdict as ASCII; unmapped `\p{Nd}` rejected)
+  - [x] 22.2 Property test P31 (identifier and hyphen immunity)
+  - [x] 22.3 Edge tests: `−5 nT` (U+2212), `٥`, `۵`, fullwidth `５`, `5-15 min`, `10-minute`, `L1`, `G05`, `PRN 12`, `SGP4`
+  - _Requirements: FR-RE-24, FR-RE-25_
+- [x] 23. Metric and unit grounding with structured allowlist
+  - Replace the flat number list with `buildGroundedMap(assessment)` (metric key to `{ value, unit }`) built only from structured fields including `feeds.*.ageMin`; bind each cited number to its adjacent unit or metric; displayed-precision tolerance, integers exact; never read numbers from `replayLabel`, `replayArchiveIso` or driver labels
+  - [x] 23.1 Property test P32 (right value with wrong unit rejected, right unit accepted)
+  - [x] 23.2 Property test P33 (tolerance at displayed precision, integers exact, label-only numbers rejected)
+  - [x] 23.3 Edge tests: `5 TECU` cited as `5 min`; `12.34` vs `12.3`; number only in `replayLabel`; `feeds.solarWind.ageMin` accepted
+  - _Requirements: FR-RE-26, FR-RE-27_
+- [x] 24. English explainer rewrite (`src/explainer.ts`)
+  - Remove the `lang` parameter; state stale feeds with ages and "lead time and TEC are not current"; say "archive" not "live" in replay; include `REPLAY` badge and archive timestamp; include `unknownPresetReason` and `customMaskDefaultedReason`; describe gain as a sensitivity multiplier; render null metric as "unavailable"; `safeText` caps strings at 80 characters and strips control characters; fix `SURVEY_DRONE` output so it passes grounding
+  - [x] 24.1 Property test P34 (explainer output passes `verifyGroundedNumbers` for `TRACTOR_RTK`, `SURVEY_DRONE`, `CUSTOM`)
+  - [x] 24.2 Property test P35 (staleness notice names each stale feed, age or "missing", and "not current")
+  - [x] 24.3 Property test P36 (replay wording: `REPLAY`, archive timestamp, no "live")
+  - [x] 24.4 Property test P37 (control characters removed, 80-character cap on echoed strings)
+  - [x] 24.5 Example tests: unknown preset text, defaulted custom mask text, gain wording, stale solar wind sentence, unverified archive sentence, `lang` argument not accepted (type test)
+  - _Requirements: FR-RE-19, FR-RE-28, FR-RE-29, FR-RE-30, FR-RE-31, FR-RE-32_
+- [x] 25. Checkpoint - Ensure all tests pass, ask the user if questions arise.
+- [x] 26. English-only scope change (removal of Urdu)
+  - Remove Urdu strings, RTL (`dir="rtl"`) and the language toggle from `apps/web` (`src/lib/i18n.ts`, `layout.tsx`, `page.tsx`, components) and any `lang` parameter in `/api/assess`; keep Field Mode
+  - Edit `.kiro/steering/product.md` (replace "English and Urdu (RTL)" with English-only plus Field Mode), `.kiro/steering/haunt-design.md` (remove the RTL line), `.kiro/agents/haunt-designer.md` (remove Urdu RTL from description and body), and any other `.kiro/steering/*.md` or `.kiro/powers` text that mentions Urdu or RTL; update `README.md` and `CHANGELOG.md` if they mention Urdu
+  - [x] 26.1 Add a repo check test (vitest, example-based) that scans `apps/web/src`, `packages/engine/src`, `.kiro/steering` and `.kiro/agents` for `urdu`, `rtl` and Urdu-script characters (U+0600–U+06FF) and fails on any match
+  - [x] 26.2 Example test that `/api/assess` ignores a `lang` field and returns English text
+  - _Requirements: FR-RE-33_
+- [x] 27. Update `apps/web` and `/api/assess` for the new output shape
+  - Render `metricValue: null` as "unavailable", show the "unverified archive" state with `replayInvalidReason`, show `INVALID_INPUT` and `NO_VISIBLE_SATELLITES` reasons, keep the REPLAY badge and archive timestamp, pass sanitized input through the engine
+  - [x] 27.1 Example tests (route handler and component render) for null metric, unverified archive and invalid input responses
+  - _Requirements: FR-RE-19, FR-RE-22, FR-RE-14, FR-RE-20_
+- [x] 28. Final: verification and review log
+  - Run `npm run typecheck && npm test` from the repo root and fix failures
+  - Append the multi-model review catches (physicist and skeptic) to `docs/kiro-log.md`: NaN inputs, invented 15 TECU and Kp 0.0, 999 sentinel, empty feeds, negative or NaN ages, duplicate staleness code, Unicode digit and sign bypass, unit-blind grounding, label-sourced allowlist, replay-as-live fallback, explainer staleness and replay wording gaps
+  - [x] 28.1 Confirm the log entry lists each fix with its requirement ID and task number
+  - _Requirements: FR-RE-14 to FR-RE-33_
