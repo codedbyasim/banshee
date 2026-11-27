@@ -1,5 +1,5 @@
 import { assessFieldRisk, explainAssessment } from "@banshee/engine";
-import { fetchLiveKpIndex, fetchLiveSolarWind, STORM_REPLAYS } from "@banshee/feeds";
+import { fetchLiveKpIndex, fetchLiveSolarWind } from "@banshee/feeds";
 
 interface SavedField {
   name: string;
@@ -17,22 +17,27 @@ export async function checkFieldStatus(field: SavedField) {
     fetchLiveSolarWind(),
     fetchLiveKpIndex(),
   ]);
-  const fallback = STORM_REPLAYS["multan-sunset"];
+  const now = Date.now();
+  const windAgeMin = liveWind
+    ? Math.max(0, (now - Date.parse(liveWind.timestampIso)) / 60_000)
+    : null;
 
+  // Missing feeds are passed as null/empty so the engine treats them as stale
+  // and never reports "Safe" (fail-safe staleness rule). No replay data is used.
   const assessment = assessFieldRisk({
     latDeg: field.latDeg,
     lonDeg: field.lonDeg,
-    timestampIso: new Date().toISOString(),
+    timestampIso: new Date(now).toISOString(),
     elevationMaskDeg: 10,
-    solarWind: liveWind ?? fallback.solarWind,
-    glotec: fallback.glotec,
-    kpIndex: liveKp ?? fallback.kpIndex,
-    satellites: fallback.satellites,
+    solarWind: liveWind,
+    glotec: null,
+    kpIndex: liveKp,
+    satellites: [],
     feedAges: {
-      solarWindAgeMin: liveWind ? 2 : 40,
-      glotecAgeMin: 10,
-      kpAgeMin: liveKp !== null ? 15 : 200,
-      gnssAgeMin: 60,
+      solarWindAgeMin: Number.isFinite(windAgeMin) ? windAgeMin : null,
+      glotecAgeMin: null,
+      kpAgeMin: liveKp !== null ? 0 : null,
+      gnssAgeMin: null,
     },
   });
 
